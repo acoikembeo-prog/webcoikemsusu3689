@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Football Card Game</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#07111f;
+  color:#fff
+}
+header{
+  padding:cho 15px;
+  background:#0d2036;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  position:sticky;
+  top:0;
+  z-index:5
+}
+nav{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  padding:10px;
+  background:#102b46
+}
+button{
+  padding:10px 14px;
+  border:0;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold
+}
+button:hover{transform:translateY(-1px)}
+.page{display:none;padding:20px}
+.page.active{display:block}
+
+.panel{
+  background:#10243b;
+  padding:18px;
+  border-radius:14px;
+  margin-bottom:15px
+}
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+  gap:12px
+}
+
+.card{
+  position:relative;
+  overflow:hidden;
+  padding:15px;
+  min-height:280px;
+  border-radius:16px;
+  background:linear-gradient(145deg,#263e57,#0b1725);
+  border:2px solid #46617b
+}
+.card.gold{
+  background:linear-gradient(145deg,#795d16,#211909);
+  border-color:#ffd84a
+}
+.card.legend{
+  background:linear-gradient(145deg,#563d87,#171024);
+  border-color:#c28cff
+}
+.card .ovr{
+  font-size:42px;
+  font-weight:bold
+}
+.card h2{margin:5px 0}
+.tag{
+  display:inline-block;
+  padding:4px 7px;
+  border-radius:5px;
+  background:#1d486c;
+  margin:2px
+}
+.stat{
+  display:flex;
+  justify-content:space-between;
+  margin:5px 0
+}
+.hiddenStat{
+  color:#ffd84a;
+  font-weight:bold
+}
+.teamColor{
+  color:#69d9ff;
+  font-weight:bold
+}
+.big{
+  font-size:30px;
+  font-weight:bold
+}
+.log{
+  max-height:220px;
+  overflow:auto;
+  background:#050b12;
+  padding:10px;
+  border-radius:8px
+}
+#pitch{
+  max-width:700px;
+  height:470px;
+  margin:auto;
+  position:relative;
+  border:4px solid white;
+  border-radius:18px;
+  background:
+  repeating-linear-gradient(
+    90deg,
+    #176d3b 0,
+    #176d3b 70px,
+    #1b7842 70px,
+    #1b7842 140px
+  )
+}
+.playerDot{
+  position:absolute;
+  width:54px;
+  height:54px;
+  border-radius:50%;
+  background:#ffd447;
+  color:#111;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:bold;
+  border:3px solid white
+}
+input,select{
+  padding:10px;
+  border-radius:7px;
+  border:0
+}
+.notice{
+  padding:12px;
+  border-radius:8px;
+  background:#183958;
+  margin:8px 0
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <b>⚽ FOOTBALL CARD GAME</b>
+  <div>
+    💰 <span id="coins">0</span>
+    💎 <span id="gems">0</span>
+    🏆 <span id="rank">Bronze</span>
+  </div>
+</header>
+
+<nav>
+  <button onclick="showPage('home')">🏠</button>
+  <button onclick="showPage('squad')">👥 Đội hình</button>
+  <button onclick="showPage('match')">⚽ Trận đấu</button>
+  <button onclick="showPage('rankPage')">🏆 Đá hạng</button>
+  <button onclick="showPage('upgrade')">🃏 Nâng cấp</button>
+<button onclick="showPage('market')">💰 TTCN</button>
+  <button onclick="showPage('exchange')">🔄 Trao đổi</button>
+  <button onclick="showPage('packs')">🎁 Mở thẻ</button>
+  <button onclick="showPage('missions')">📋 Nhiệm vụ</button>
+</nav>
+
+<!-- HOME -->
+<section id="home" class="page active">
+  <div class="panel">
+    <h1>⚽ Football Card Game</h1>
+    <p>Đội hình của bạn: <b id="teamCount"></b> cầu thủ</p>
+    <p>Team Color: <b id="teamColorHome"></b></p>
+    <p>Rank: <b id="rankHome"></b></p>
+  </div>
+
+  <div class="panel">
+    <h2>⭐ Cầu thủ nổi bật</h2>
+    <div id="featured"></div>
+  </div>
+</section>
+
+<!-- SQUAD -->
+<section id="squad" class="page">
+  <h1>👥 Đội hình</h1>
+  <div class="panel">
+    <h2>Team Color</h2>
+    <div id="teamColorInfo"></div>
+  </div>
+  <div id="squadList" class="cards"></div>
+</section>
+
+<!-- MATCH -->
+<section id="match" class="page">
+  <h1>⚽ Trận đấu</h1>
+
+  <div class="panel">
+    <div class="big" style="text-align:center">
+      <span id="myScore">0</span>
+      -
+      <span id="enemyScore">0</span>
+    </div>
+  </div>
+
+  <div id="pitch">
+    <div class="playerDot" style="left:45%;bottom:5%">ST</div>
+    <div class="playerDot" style="left:18%;bottom:25%">LW</div>
+    <div class="playerDot" style="left:72%;bottom:25%">RW</div>
+    <div class="playerDot" style="left:30%;top:40%">CM</div>
+    <div class="playerDot" style="left:60%;top:40%">CM</div>
+    <div class="playerDot" style="left:45%;top:55%">CDM</div>
+    <div class="playerDot" style="left:7%;top:67%">LB</div>
+    <div class="playerDot" style="left:30%;top:70%">CB</div>
+    <div class="playerDot" style="left:60%;top:70%">CB</div>
+    <div class="playerDot" style="left:83%;top:67%">RB</div>
+    <div class="playerDot" style="left:45%;top:86%">GK</div>
+  </div>
+
+  <div style="text-align:center;margin:15px">
+    <button onclick="attack()">⚡ Tấn công</button>
+    <button onclick="passBall()">🎯 Chuyền</button>
+    <button onclick="shoot()">🥅 Sút</button>
+    <button onclick="finishMatch()">🏁 Kết thúc</button>
+  </div>
+
+  <div class="panel">
+    <h3>📜 Diễn biến</h3>
+    <div id="matchLog" class="log"></div>
+  </div>
+</section>
+
+<!-- RANK -->
+<section id="rankPage" class="page">
+  <h1>🏆 Đá hạng</h1>
+
+  <div class="panel">
+    <h2>Hạng: <span id="rankName"></span></h2>
+    <p>Điểm: <b id="rankPoints"></b></p>
+    <button onclick="rankMatch()">⚔️ Tìm đối thủ</button>
+    <div id="rankResult"></div>
+  </div>
+</section>
+
+<!-- UPGRADE -->
+<section id="upgrade" class="page">
+  <h1>🃏 Nâng cấp thẻ</h1>
+  <div class="notice">
+    Nâng cấp làm tăng OVR và một số chỉ số.
+    Cấp càng cao thì tỷ lệ thành công càng thấp.
+  </div>
+  <div id="upgradeList" class="cards"></div>
+</section>
+
+<!-- MARKET -->
+<section id="market" class="page">
+  <h1>💰 TTCN</h1>
+
+  <div class="panel">
+color:["Capital United"]
+},
+
+{
+ id:7,
+ name:"Flash",
+ club:"Galaxy FC",
+ pos:"RW",
+ season:"ICON",
+ ovr:89,
+ price:450000,
+ stats:{
+   pace:98,
+   shooting:86,
+   passing:83,
+   dribbling:95,
+   defending:30,
+   physical:70
+ },
+ hidden:["Speed Dribbler"],
+ gold:["Pace"],
+ color:["Galaxy FC"]
+},
+
+{
+ id:8,
+ name:"Wall",
+ club:"Royal City",
+ pos:"CB",
+ season:"LEGEND",
+ ovr:90,
+ price:500000,
+ stats:{
+   pace:79,
+   shooting:30,
+   passing:78,
+   dribbling:60,
+   defending:98,
+   physical:96
+ },
+ hidden:["Block"],
+ gold:["Defending"],
+ color:["Royal City"]
+}
+
+];
+
+
+/* =====================================
+   TẠO NHIỀU MÙA TỪ DATABASE
+===================================== */
+
+function generateSeasons(){
+
+  const seasons=[
+    "BASE",
+    "PRO",
+    "ELITE",
+    "ICON",
+    "LEGEND"
+  ];
+
+  let result=[];
+
+  DB.forEach(p=>{
+
+    seasons.forEach((season,index)=>{
+
+      const bonus=index*2;
+
+      result.push({
+        ...p,
+        uid:p.id+"-"+season,
+        season,
+        ovr:p.ovr-bonus+4,
+        price:Math.max(
+          50000,
+          Math.floor(p.price/(index+1))
+        ),
+        level:1
+      });
+
+    });
+
+  });
+
+  return result;
+}
+
+const ALL_PLAYERS=generateSeasons();
+
+
+/* =====================================
+   PLAYER OBJECT
+===================================== */
+
+let squad=[
+  createCard(ALL_PLAYERS.find(p=>p.id===1 && p.seas
+<input id="marketSearch" placeholder="Tìm cầu thủ..." oninput="renderMarket()">
+  </div>
+
+  <div id="marketList" class="cards"></div>
+</section>
+
+<!-- EXCHANGE -->
+<section id="exchange" class="page">
+  <h1>🔄 Trao đổi</h1>
+
+  <div class="panel">
+    <p>Đổi 3 cầu thủ thành 1 thẻ ngẫu nhiên.</p>
+    <button onclick="exchangePlayers()">🔄 Trao đổi</button>
+    <div id="exchangeResult"></div>
+  </div>
+</section>
+
+<!-- PACKS -->
+<section id="packs" class="page">
+  <h1>🎁 Mở thẻ</h1>
+
+  <div class="panel">
+    <h2>🎁 Gói cầu thủ cơ bản</h2>
+    <p>100.000 coins</p>
+    <button onclick="openPack('basic')">Mở</button>
+  </div>
+
+  <div class="panel">
+    <h2>💎 Gói cao cấp</h2>
+    <p>10 gems</p>
+    <button onclick="openPack('premium')">Mở</button>
+  </div>
+
+  <div id="packResult"></div>
+</section>
+
+<!-- MISSIONS -->
+<section id="missions" class="page">
+  <h1>📋 Nhiệm vụ</h1>
+
+  <div class="panel">
+    <p>⚽ Chơi 1 trận</p>
+    <button onclick="claimMission('match')">Nhận 50.000 coins</button>
+  </div>
+
+  <div class="panel">
+    <p>🃏 Nâng cấp 1 cầu thủ</p>
+    <button onclick="claimMission('upgrade')">Nhận 5 gems</button>
+  </div>
+</section>
+
+
+<script>
+
+/* =====================================
+   DATABASE CẦU THỦ
+===================================== */
+
+const DB = [
+
+{
+ id:1,
+ name:"Nova",
+ club:"Galaxy FC",
+ pos:"ST",
+ season:"LEGEND",
+ ovr:92,
+ price:600000,
+ stats:{
+   pace:94,
+   shooting:96,
+   passing:84,
+   dribbling:94,
+   defending:42,
+   physical:86
+ },
+ hidden:["Outside Foot Shot","Finesse Shot"],
+ gold:["Finishing"],
+ color:["Galaxy FC"]
+},
+
+{
+ id:2,
+ name:"Rex",
+ club:"Galaxy FC",
+ pos:"LW",
+ season:"ICON",
+ ovr:90,
+ price:480000,
+ stats:{
+   pace:97,
+   shooting:88,
+   passing:86,
+   dribbling:96,
+   defending:35,
+   physical:75
+ },
+ hidden:["Rapid"],
+ gold:["Dribbling"],
+ color:["Galaxy FC"]
+},
+
+{
+ id:3,
+ name:"Orion",
+ club:"Royal City",
+ pos:"CM",
+ season:"ELITE",
+ ovr:91,
+ price:520000,
+ stats:{
+   pace:82,
+   shooting:84,
+   passing:97,
+   dribbling:92,
+   defending:76,
+   physical:80
+ },
+ hidden:["Through Ball"],
+ gold:["Passing"],
+ color:["Royal City"]
+},
+
+{
+ id:4,
+ name:"Titan",
+ club:"Royal City",
+ pos:"CDM",
+ season:"ELITE",
+ ovr:89,
+ price:410000,
+ stats:{
+   pace:78,
+   shooting:67,
+   passing:90,
+   dribbling:75,
+   defending:94,
+   physical:95
+ },
+ hidden:["Intercept"],
+ gold:["Physical"],
+ color:["Royal City"]
+},
+
+{
+ id:5,
+ name:"Vega",
+ club:"Capital United",
+ pos:"CB",
+ season:"PRO",
+ ovr:88,
+ price:360000,
+ stats:{
+   pace:82,
+   shooting:35,
+   passing:75,
+   dribbling:62,
+   defending:96,
+   physical:91
+ },
+ hidden:["Aerial"],
+ gold:["Defending"],
+ color:["Capital United"]
+},
+
+{
+ id:6,
+ name:"Astro",
+ club:"Capital United",
+ pos:"GK",
+ season:"PRO",
+ ovr:87,
+ price:300000,
+ stats:{
+   pace:60,
+   shooting:20,
+   passing:72,
+   dribbling:40,
+   defending:94,
+   physical:88
+ },
+ hidden:["1v1 GK"],
+ gold:["Reflexes"],
